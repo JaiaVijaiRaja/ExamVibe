@@ -13,6 +13,7 @@ interface LayoutProps {
   user: User;
   progress: AppProgress;
   onUpdateProgress: (newProgress: Partial<AppProgress>) => void;
+  isDataLoaded: boolean;
 }
 
 export const Layout: React.FC<LayoutProps> = ({ 
@@ -23,7 +24,8 @@ export const Layout: React.FC<LayoutProps> = ({
   onToggleTheme,
   user,
   progress,
-  onUpdateProgress
+  onUpdateProgress,
+  isDataLoaded
 }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -59,6 +61,7 @@ export const Layout: React.FC<LayoutProps> = ({
           progress={progress}
           onUpdateProgress={onUpdateProgress}
           userEmail={user.email}
+          isDataLoaded={isDataLoaded}
         />
       </div>
 

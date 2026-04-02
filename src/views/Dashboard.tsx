@@ -116,139 +116,176 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const totalCompleted = taskCount + roadmapCount + challengeCount + notesCount + assignmentCount + predictorCount + flashcardSetCount + examPassedCount;
 
   return (
-    <div className="space-y-10 pb-20">
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 animate-slideUp">
+    <div className="space-y-8 pb-12">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
-            Hello, <span className="text-gradient">{user.name.split(' ')[0]}</span>!
-          </h2>
-          <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-[0.2em] text-xs mt-2 flex items-center gap-2">
-            <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse" />
-            {user.major} • {totalCompleted} Milestones
-          </p>
+          <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Welcome, {user.name}!</h2>
+          <p className="text-slate-600 dark:text-slate-400">Pursuing {user.major} • {totalCompleted} Milestones Achieved</p>
         </div>
         <button 
           onClick={onLogout}
-          className="flex items-center gap-2 px-6 py-3 text-sm font-black text-slate-500 hover:text-red-600 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl transition-all hover:shadow-xl hover:shadow-red-500/10 group shrink-0"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
         >
-          <LogOut className="w-4 h-4 transition-transform group-hover:-translate-x-1" /> Logout
+          <LogOut className="w-4 h-4" /> Logout
         </button>
-      </header>
-
-      {/* Progress Overview */}
-      <section className="premium-gradient p-8 sm:p-12 rounded-[2.5rem] text-white shadow-2xl shadow-blue-500/20 relative overflow-hidden animate-slideUp" style={{ animationDelay: '0.1s' }}>
-        <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl -mr-48 -mt-48 pointer-events-none animate-float"></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-400/20 rounded-full blur-3xl -ml-48 -mb-48 pointer-events-none animate-float" style={{ animationDelay: '2s' }}></div>
-        
-        <div className="relative z-10">
-          <div className="flex items-center gap-3 mb-10">
-            <div className="p-3 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20">
-              <BarChart3 className="w-6 h-6 text-white" />
+      </header>      {/* Progress Overview */}
+      <section className="bg-gradient-to-br from-blue-600 to-indigo-700 p-5 sm:p-8 rounded-2xl text-white shadow-xl shadow-blue-200 dark:shadow-none animate-fadeIn">
+        <div className="flex items-center gap-3 mb-6">
+          <BarChart3 className="w-6 h-6" />
+          <h3 className="text-xl font-bold">Your Learning Progress</h3>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
+          <div>
+            <div className="flex justify-between items-end mb-2">
+              <span className="text-sm font-medium text-blue-100">Study Tasks</span>
+              <span className="text-2xl font-black">{taskCount}</span>
             </div>
-            <h3 className="text-2xl font-black tracking-tight">Learning Analytics</h3>
+            <div className="h-2 bg-blue-400/30 rounded-full overflow-hidden">
+              <div className="h-full bg-white transition-all duration-1000" style={{ width: `${Math.min(100, taskCount * 10)}%` }}></div>
+            </div>
           </div>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
-            {[
-              { label: 'Study Tasks', count: taskCount, color: 'bg-white', progress: Math.min(100, taskCount * 10) },
-              { label: 'Roadmap Steps', count: roadmapCount, color: 'bg-blue-200', progress: Math.min(100, roadmapCount * 25) },
-              { label: 'AI Insights', count: notesCount + assignmentCount + predictorCount, color: 'bg-indigo-200', progress: Math.min(100, (notesCount + assignmentCount + predictorCount) * 20) },
-              { label: 'Revision', count: flashcardSetCount, color: 'bg-violet-200', progress: Math.min(100, flashcardSetCount * 33) }
-            ].map((stat, i) => (
-              <div key={i} className="group">
-                <div className="flex justify-between items-end mb-3">
-                  <span className="text-xs font-black text-blue-100 uppercase tracking-widest">{stat.label}</span>
-                  <span className="text-3xl font-black tabular-nums">{stat.count}</span>
-                </div>
-                <div className="h-3 bg-white/10 rounded-full overflow-hidden border border-white/5">
-                  <div 
-                    className={`h-full ${stat.color} transition-all duration-1000 ease-out shadow-[0_0_15px_rgba(255,255,255,0.5)]`} 
-                    style={{ width: `${stat.progress}%` }}
-                  />
-                </div>
-              </div>
-            ))}
+          <div>
+            <div className="flex justify-between items-end mb-2">
+              <span className="text-sm font-medium text-blue-100">Roadmap Steps</span>
+              <span className="text-2xl font-black">{roadmapCount}</span>
+            </div>
+            <div className="h-2 bg-blue-400/30 rounded-full overflow-hidden">
+              <div className="h-full bg-white transition-all duration-1000" style={{ width: `${Math.min(100, roadmapCount * 25)}%` }}></div>
+            </div>
+          </div>
+          <div>
+            <div className="flex justify-between items-end mb-2">
+              <span className="text-sm font-medium text-blue-100">AI Insights</span>
+              <span className="text-2xl font-black">{notesCount + assignmentCount + predictorCount}</span>
+            </div>
+            <div className="h-2 bg-blue-400/30 rounded-full overflow-hidden">
+              <div className="h-full bg-white transition-all duration-1000" style={{ width: `${Math.min(100, (notesCount + assignmentCount + predictorCount) * 20)}%` }}></div>
+            </div>
+          </div>
+          <div>
+            <div className="flex justify-between items-end mb-2">
+              <span className="text-sm font-medium text-blue-100">Revision</span>
+              <span className="text-2xl font-black">{flashcardSetCount}</span>
+            </div>
+            <div className="h-2 bg-blue-400/30 rounded-full overflow-hidden">
+              <div className="h-full bg-white transition-all duration-1000" style={{ width: `${Math.min(100, flashcardSetCount * 33)}%` }}></div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Quick Actions Bento Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 animate-slideUp" style={{ animationDelay: '0.2s' }}>
-        {[
-          { id: 'planner', icon: Zap, label: 'Smart Planner', desc: 'AI Schedules', color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20', border: 'hover:border-blue-500' },
-          { id: 'notes', icon: Book, label: 'Quick Notes', desc: 'Topic Synthesis', color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-900/20', border: 'hover:border-indigo-500' },
-          { id: 'roadmap', icon: Target, label: 'Skill Up', desc: 'Career Paths', color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20', border: 'hover:border-emerald-500' },
-          { id: 'flashcards', icon: Brain, label: 'Revision', desc: 'Smart Cards', color: 'text-orange-600', bg: 'bg-orange-50 dark:bg-orange-900/20', border: 'hover:border-orange-500' },
-          { id: 'reportcard', icon: BarChart3, label: 'Report Card', desc: 'Performance', color: 'text-violet-600', bg: 'bg-violet-50 dark:bg-violet-900/20', border: 'hover:border-violet-500' }
-        ].map((action, i) => (
-          <div 
-            key={i}
-            onClick={() => onViewChange(action.id as ViewType)}
-            className={`bento-card group cursor-pointer ${action.border}`}
-          >
-            <div className={`w-14 h-14 ${action.bg} rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-all duration-500 shadow-inner`}>
-              <action.icon className={`${action.color} w-7 h-7`} />
-            </div>
-            <h3 className="text-lg font-black text-slate-900 dark:text-white tracking-tight mb-1">{action.label}</h3>
-            <p className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">{action.desc}</p>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 animate-fadeIn" style={{ animationDelay: '0.1s' }}>
+        <div 
+          onClick={() => onViewChange('planner')}
+          className="p-5 sm:p-6 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 hover:border-blue-500 transition-all cursor-pointer group"
+        >
+          <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+            <Zap className="text-blue-600 dark:text-blue-400 w-6 h-6" />
           </div>
-        ))}
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Smart Planner</h3>
+          <p className="text-slate-500 dark:text-slate-400 text-sm">Generate optimized study schedules.</p>
+        </div>
+
+        <div 
+          onClick={() => onViewChange('notes')}
+          className="p-5 sm:p-6 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 hover:border-indigo-500 transition-all cursor-pointer group"
+        >
+          <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+            <Book className="text-indigo-600 dark:text-indigo-400 w-6 h-6" />
+          </div>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Quick Notes</h3>
+          <p className="text-slate-500 dark:text-slate-400 text-sm">Convert topics into structured notes.</p>
+        </div>
+
+        <div 
+          onClick={() => onViewChange('roadmap')}
+          className="p-5 sm:p-6 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 hover:border-emerald-500 transition-all cursor-pointer group"
+        >
+          <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+            <Target className="text-emerald-600 dark:text-emerald-400 w-6 h-6" />
+          </div>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Skill Up</h3>
+          <p className="text-slate-500 dark:text-slate-400 text-sm">Step-by-step career roadmaps.</p>
+        </div>
+
+        <div 
+          onClick={() => onViewChange('flashcards')}
+          className="p-5 sm:p-6 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 hover:border-orange-500 transition-all cursor-pointer group"
+        >
+          <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+            <Brain className="text-orange-600 dark:text-orange-400 w-6 h-6" />
+          </div>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Revision Cards</h3>
+          <p className="text-slate-500 dark:text-slate-400 text-sm">Quick flashcards for completed topics.</p>
+        </div>
+
+        <div 
+          onClick={() => onViewChange('reportcard')}
+          className="p-5 sm:p-6 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 hover:border-blue-500 transition-all cursor-pointer group"
+        >
+          <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+            <BarChart3 className="text-blue-600 dark:text-blue-400 w-6 h-6" />
+          </div>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Report Card</h3>
+          <p className="text-slate-500 dark:text-slate-400 text-sm">Detailed academic performance & stats.</p>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-slideUp" style={{ animationDelay: '0.3s' }}>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 animate-fadeIn" style={{ animationDelay: '0.2s' }}>
         {/* Exam Countdown */}
-        <div className="glass-card relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-blue-400/10 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none group-hover:scale-150 transition-transform duration-1000"></div>
+        <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl p-5 sm:p-8 rounded-3xl shadow-2xl shadow-blue-900/5 border border-white/80 dark:border-slate-700/50 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-blue-400/10 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none"></div>
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-400/10 rounded-full blur-3xl -ml-32 -mb-32 pointer-events-none"></div>
           
-          <div className="flex items-center justify-between mb-10 relative z-10">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-2xl shadow-inner">
+          <div className="flex items-center justify-between mb-8 relative z-10">
+            <h3 className="text-2xl font-extrabold flex items-center gap-3 text-slate-800 dark:text-white tracking-tight">
+              <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-xl">
                 <Clock className="text-orange-600 dark:text-orange-400 w-6 h-6" />
               </div>
-              <div>
-                <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Exam Countdown</h3>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Don't miss a beat</p>
-              </div>
-            </div>
+              Exam Countdown
+            </h3>
           </div>
 
           <div className="space-y-4 relative z-10">
             {exams.length === 0 ? (
-              <div className="text-center py-16 bg-slate-50/50 dark:bg-slate-800/30 rounded-[2rem] border-2 border-dashed border-slate-200 dark:border-slate-700">
-                <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-xs">No exams scheduled</p>
+              <div className="text-center py-12 bg-white/50 dark:bg-slate-800/50 rounded-2xl border border-dashed border-slate-300 dark:border-slate-600">
+                <p className="text-slate-500 dark:text-slate-400 font-medium">No exams added yet. Start planning!</p>
               </div>
             ) : (
               [...exams].sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map(exam => {
                 const days = getDaysLeft(exam.date);
                 const isPassed = progress.completedExams?.[exam.id];
                 return (
-                  <div key={exam.id} className={`flex flex-col sm:flex-row sm:items-center justify-between p-6 rounded-[1.5rem] transition-all duration-500 group/item gap-4 ${isPassed ? 'bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-800/30' : 'bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/50 hover:shadow-xl hover:shadow-blue-500/5 hover:border-blue-200 dark:hover:border-blue-900/50'}`}>
-                    <div className="flex items-center gap-5">
+                  <div key={exam.id} className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-5 rounded-2xl group transition-all duration-300 hover:shadow-md gap-4 ${isPassed ? 'bg-emerald-50/80 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800' : 'bg-white/80 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-600 hover:border-blue-200'}`}>
+                    <div className="flex items-center gap-4">
                       {isPassed ? (
-                        <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl flex items-center justify-center">
-                          <CheckCircle className="w-6 h-6 text-emerald-600" />
-                        </div>
+                        <CheckCircle className="w-6 h-6 text-emerald-500 shrink-0" />
                       ) : (
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-lg ${days <= 7 ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}>
-                          {days}
-                        </div>
+                        <div className="w-2 h-2 rounded-full bg-blue-500 shrink-0"></div>
                       )}
                       <div className="min-w-0">
-                        <h4 className={`text-lg font-black tracking-tight truncate ${isPassed ? 'text-emerald-900 dark:text-emerald-100 line-through opacity-50' : 'text-slate-900 dark:text-white'}`}>{exam.subject}</h4>
-                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{new Date(exam.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                        <h4 className={`text-lg font-bold truncate ${isPassed ? 'text-emerald-900 dark:text-emerald-100 line-through opacity-70' : 'text-slate-800 dark:text-white'}`}>{exam.subject}</h4>
+                        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{new Date(exam.date).toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</p>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between sm:justify-end gap-4">
+                    <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4">
+                      {!isPassed && (
+                        <div className={`px-3 py-1 rounded-full text-xs font-bold shadow-sm whitespace-nowrap ${days <= 7 ? 'bg-red-100 text-red-700 border border-red-200' : 'bg-blue-100 text-blue-700 border border-blue-200'}`}>
+                          {days} Days Left
+                        </div>
+                      )}
+                      
                       <div className="flex items-center gap-2">
                         <button 
                           onClick={() => handlePassed(exam.id, exam.subject)}
-                          className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${isPassed ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/20' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-blue-600 hover:text-white hover:shadow-xl hover:shadow-blue-500/20'}`}
+                          className={`px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all shadow-sm whitespace-nowrap ${isPassed ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200' : 'bg-slate-100 dark:bg-slate-600 text-slate-700 dark:text-slate-200 hover:bg-blue-600 hover:text-white hover:shadow-blue-500/20'}`}
                         >
                           {isPassed ? 'Passed' : 'Mark Passed'}
                         </button>
                         <button 
                           onClick={() => handleDelete(exam.id, exam.subject)}
-                          className="text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all p-2.5 rounded-xl sm:opacity-0 group-hover/item:opacity-100"
+                          className="text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors sm:opacity-0 sm:group-hover:opacity-100 p-2 rounded-xl"
                           aria-label="Delete exam"
                         >
                           <Trash2 className="w-5 h-5" />
@@ -263,45 +300,43 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         {/* Add Exam Form */}
-        <div className="glass-card relative overflow-hidden group">
-          <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-400/10 rounded-full blur-3xl -ml-32 -mb-32 pointer-events-none group-hover:scale-150 transition-transform duration-1000"></div>
+        <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl p-8 rounded-3xl shadow-2xl shadow-blue-900/5 border border-white/80 dark:border-slate-700/50 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-400/10 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none"></div>
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-400/10 rounded-full blur-3xl -ml-32 -mb-32 pointer-events-none"></div>
           
-          <div className="flex items-center gap-4 mb-10">
-            <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-2xl shadow-inner">
+          <h3 className="text-2xl font-extrabold mb-8 text-slate-800 dark:text-white tracking-tight flex items-center gap-3 relative z-10">
+            <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-xl">
               <Plus className="text-blue-600 dark:text-blue-400 w-6 h-6" />
             </div>
-            <div>
-              <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">New Exam</h3>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Plan your victory</p>
-            </div>
-          </div>
+            Add New Exam
+          </h3>
           
           <div className="space-y-6 relative z-10">
             <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Subject Name</label>
+              <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Subject Name</label>
               <input 
                 type="text" 
                 value={newExamSubject}
                 onChange={(e) => setNewExamSubject(e.target.value)}
-                placeholder="e.g. Advanced Calculus"
-                className="w-full px-6 py-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all shadow-inner placeholder:text-slate-300 dark:placeholder:text-slate-600"
+                placeholder="e.g. Thermodynamics"
+                className="w-full px-5 py-3 rounded-xl border border-slate-200/80 dark:border-slate-600 bg-white/80 dark:bg-slate-700/80 text-slate-900 dark:text-white font-medium focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all shadow-sm"
               />
             </div>
             <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Exam Date</label>
+              <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Exam Date</label>
               <input 
                 type="date" 
                 value={newExamDate}
                 onChange={(e) => setNewExamDate(e.target.value)}
-                className="w-full px-6 py-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all shadow-inner"
+                className="w-full px-5 py-3 rounded-xl border border-slate-200/80 dark:border-slate-600 bg-white/80 dark:bg-slate-700/80 text-slate-900 dark:text-white font-medium focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all shadow-sm"
               />
             </div>
             <button 
               onClick={handleAdd}
               disabled={!newExamSubject || !newExamDate}
-              className="w-full premium-gradient text-white font-black uppercase tracking-widest py-5 px-8 rounded-2xl flex items-center justify-center gap-3 transition-all shadow-2xl shadow-blue-500/30 disabled:opacity-50 disabled:shadow-none transform hover:-translate-y-1 active:scale-95"
+              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/30 disabled:opacity-50 disabled:shadow-none transform hover:-translate-y-0.5"
             >
-              <Plus className="w-6 h-6" /> Add to Countdown
+              <Plus className="w-6 h-6" /> Add Exam to Countdown
             </button>
           </div>
         </div>
@@ -309,66 +344,44 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
       {/* Admin Login Logs */}
       {isAdmin && (
-        <section className="glass-card animate-slideUp" style={{ animationDelay: '0.4s' }}>
-          <div className="flex items-center justify-between mb-10">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-2xl">
-                <ShieldCheck className="text-emerald-600 w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Admin Console</h3>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">System Access Logs</p>
-              </div>
-            </div>
+        <section className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-bold flex items-center gap-2 text-slate-900 dark:text-white">
+              <ShieldCheck className="text-emerald-500" /> Admin: Recent Login History
+            </h3>
             <button 
               onClick={fetchLogs}
-              className="p-3 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all group"
+              className="text-xs text-blue-600 hover:underline flex items-center gap-1"
             >
-              <History className="w-5 h-5 group-hover:rotate-180 transition-transform duration-700" />
+              <History className="w-3 h-3" /> Refresh
             </button>
           </div>
 
-          <div className="overflow-x-auto custom-scrollbar">
-            <table className="w-full text-left">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b border-slate-100 dark:border-slate-800">
-                  <th className="pb-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">User Identity</th>
-                  <th className="pb-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Major</th>
-                  <th className="pb-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Timestamp</th>
+                <tr className="border-b border-slate-100 dark:border-slate-700">
+                  <th className="pb-3 font-semibold text-slate-600 dark:text-slate-400">User</th>
+                  <th className="pb-3 font-semibold text-slate-600 dark:text-slate-400">Major</th>
+                  <th className="pb-3 font-semibold text-slate-600 dark:text-slate-400">Time</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
+              <tbody className="divide-y divide-slate-50 dark:divide-slate-700/50">
                 {loginLogs.map((log, i) => (
-                  <tr key={i} className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all">
-                    <td className="py-5">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-black text-slate-400">
-                          {log.name.charAt(0)}
-                        </div>
-                        <div>
-                          <div className="font-black text-slate-900 dark:text-white tracking-tight">{log.name}</div>
-                          <div className="text-[10px] font-bold text-slate-400">{log.email}</div>
-                        </div>
-                      </div>
+                  <tr key={i} className="group hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                    <td className="py-3">
+                      <div className="font-medium text-slate-900 dark:text-white">{log.name}</div>
+                      <div className="text-xs text-slate-500">{log.email}</div>
                     </td>
-                    <td className="py-5">
-                      <span className="px-3 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg text-[10px] font-black uppercase tracking-widest">
-                        {log.major}
-                      </span>
-                    </td>
-                    <td className="py-5">
-                      <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
-                        {new Date(log.login_at).toLocaleDateString()}
-                      </div>
-                      <div className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-widest">
-                        {new Date(log.login_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </div>
+                    <td className="py-3 text-slate-600 dark:text-slate-400">{log.major}</td>
+                    <td className="py-3 text-slate-500 text-xs">
+                      {new Date(log.login_at).toLocaleString()}
                     </td>
                   </tr>
                 ))}
                 {loginLogs.length === 0 && !loadingLogs && (
                   <tr>
-                    <td colSpan={3} className="py-16 text-center text-slate-400 font-bold uppercase tracking-widest text-xs italic">No access logs recorded</td>
+                    <td colSpan={3} className="py-8 text-center text-slate-400 italic">No login logs found.</td>
                   </tr>
                 )}
               </tbody>

@@ -34,7 +34,9 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
   };
 
   const validateEmail = (email: string) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const lowerEmail = email.toLowerCase();
+    return re.test(email) && (lowerEmail.endsWith('.edu.in') || lowerEmail === 'vijaithegamer@gmail.com');
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -43,6 +45,12 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
     setLoading(true);
 
     const cleanEmail = email.toLowerCase().trim();
+
+    if (!validateEmail(cleanEmail)) {
+      showError('Only college email IDs ending with .edu.in are allowed.');
+      setLoading(false);
+      return;
+    }
 
     try {
       const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
@@ -61,7 +69,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
         if (!existingUser) {
           showError('Email not registered. Please SIGN UP first.');
         } else {
-          showError('PASSWORD IS WRONG');
+          showError('Invalid password. Please try again.');
         }
         setLoading(false);
         return;
@@ -101,7 +109,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
     const cleanEmail = email.toLowerCase().trim();
     if (!validateEmail(cleanEmail)) {
-      showError('Please enter a valid email address.');
+      showError('Only college email IDs ending with .edu.in are allowed.');
       return;
     }
 
@@ -155,7 +163,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
     const cleanEmail = email.toLowerCase().trim();
     if (!validateEmail(cleanEmail)) {
-      showError('Please enter a valid email address.');
+      showError('Only college email IDs ending with .edu.in are allowed.');
       return;
     }
 
@@ -208,6 +216,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
       if (verifyError) throw verifyError;
 
       // OTP verified, move to password setup
+      setPassword('');
       if (authMode === 'forgot-password') {
         setForgotStep('password');
       } else {

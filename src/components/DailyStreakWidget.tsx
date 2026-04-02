@@ -8,9 +8,10 @@ interface DailyStreakWidgetProps {
   currentGlobalStreak?: number;
   bestStreak?: number;
   userEmail: string;
+  isDataLoaded: boolean;
 }
 
-export const DailyStreakWidget: React.FC<DailyStreakWidgetProps> = ({ onUpdateProgress, currentGlobalStreak = 0, bestStreak = 0, userEmail }) => {
+export const DailyStreakWidget: React.FC<DailyStreakWidgetProps> = ({ onUpdateProgress, currentGlobalStreak = 0, bestStreak = 0, userEmail, isDataLoaded }) => {
   const [showWarning, setShowWarning] = useState(false);
 
   useEffect(() => {
@@ -60,7 +61,9 @@ export const DailyStreakWidget: React.FC<DailyStreakWidgetProps> = ({ onUpdatePr
       }
     };
 
-    checkStreak();
+    if (isDataLoaded) {
+      checkStreak();
+    }
 
     // Check for warning every minute (in case app is left open)
     const interval = setInterval(() => {
@@ -86,7 +89,7 @@ export const DailyStreakWidget: React.FC<DailyStreakWidgetProps> = ({ onUpdatePr
     }
 
     return () => clearInterval(interval);
-  }, [userEmail, onUpdateProgress, currentGlobalStreak]);
+  }, [userEmail, onUpdateProgress, currentGlobalStreak, isDataLoaded]);
 
   const getBadge = (days: number) => {
     if (days >= 30) return { label: 'Legend', emoji: '🏆' };

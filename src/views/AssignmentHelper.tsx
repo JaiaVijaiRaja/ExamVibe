@@ -8,6 +8,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
+import rehypeRaw from 'rehype-raw';
 import 'katex/dist/katex.min.css';
 
 // Helper component for collapsible sections
@@ -15,21 +16,19 @@ const CollapsibleSection = ({ title, children }: { title: string, children: Reac
   const [isOpen, setIsOpen] = useState(true);
 
   return (
-    <div className="mb-8 glass-card overflow-hidden group transition-all duration-500 hover:shadow-2xl hover:shadow-blue-500/5">
+    <div className="mb-6 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden bg-white dark:bg-slate-800">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between p-6 bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-800 transition-all border-l-4 border-l-blue-600"
+        className="w-full flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors border-l-4 border-l-blue-500"
       >
-        <h2 className="text-xl font-black text-slate-900 dark:text-white m-0 tracking-tight">{title}</h2>
-        <div className={`w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center transition-transform duration-500 ${isOpen ? 'rotate-180' : ''}`}>
-          <ChevronDown className="w-4 h-4 text-slate-500" />
-        </div>
+        <h2 className="text-xl font-bold text-slate-900 dark:text-white m-0">{title}</h2>
+        {isOpen ? <ChevronDown className="w-5 h-5 text-slate-500" /> : <ChevronRight className="w-5 h-5 text-slate-500" />}
       </button>
-      <div className={`transition-all duration-500 ease-in-out ${isOpen ? 'max-h-[5000px] opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
-        <div className="p-8 border-t border-slate-100 dark:border-slate-700/50">
+      {isOpen && (
+        <div className="p-6 border-t border-slate-200 dark:border-slate-700">
           {children}
         </div>
-      </div>
+      )}
     </div>
   );
 };
@@ -125,35 +124,29 @@ export const AssignmentHelper: React.FC<AssignmentHelperProps> = ({ progress, on
   };
 
   return (
-    <div className="space-y-10 pb-20">
-      <header className="animate-slideUp">
-        <h2 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
-          Assignment <span className="text-gradient">Helper</span>
-        </h2>
-        <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-[0.2em] text-xs mt-2">
-          Get structured, conceptual answers for your engineering problems
-        </p>
+    <div className="space-y-8 pb-20">
+      <header className="space-y-2">
+        <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Assignment Helper</h2>
+        <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">Get structured, conceptual answers for your engineering problems.</p>
       </header>
 
-      <div className="glass-card p-8 sm:p-10 animate-slideUp relative overflow-hidden group" style={{ animationDelay: '0.1s' }}>
-        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-400/10 rounded-full blur-3xl -mr-48 -mt-48 pointer-events-none group-hover:scale-110 transition-transform duration-1000"></div>
-        
-        <div className="space-y-6 relative z-10">
-          <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Paste your question below</label>
+      <div className="bg-white dark:bg-slate-800 p-5 sm:p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 animate-fadeIn">
+        <div className="space-y-4">
+          <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Paste your question below</label>
           <textarea 
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             placeholder="e.g. Derive the Euler's equation of motion..."
             rows={5}
-            className="w-full px-6 py-5 rounded-[2rem] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all shadow-inner placeholder:text-slate-300 dark:placeholder:text-slate-600 resize-none text-lg"
+            className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none resize-none text-base"
           />
           <div className="flex justify-end">
             <button 
               onClick={handleSolve}
               disabled={loading || !question}
-              className="w-full sm:w-auto premium-gradient text-white font-black uppercase tracking-widest py-5 px-12 rounded-2xl flex items-center justify-center gap-3 transition-all shadow-2xl shadow-indigo-500/30 disabled:opacity-50 disabled:shadow-none transform hover:-translate-y-1 active:scale-95"
+              className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-8 rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-50 shadow-lg shadow-indigo-500/20 min-h-[44px]"
             >
-              {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Send className="w-6 h-6" />}
+              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
               Analyze & Solve
             </button>
           </div>
@@ -161,52 +154,52 @@ export const AssignmentHelper: React.FC<AssignmentHelperProps> = ({ progress, on
       </div>
 
       {solution && (
-        <div className="animate-slideUp" style={{ animationDelay: '0.2s' }}>
-          <div className="bg-white dark:bg-slate-800 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-2xl overflow-hidden">
-            <div className="bg-indigo-50/50 dark:bg-indigo-900/20 px-8 py-6 border-b border-indigo-100 dark:border-indigo-800/50 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/40 rounded-2xl flex items-center justify-center shadow-inner">
-                  <Lightbulb className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-black text-indigo-900 dark:text-indigo-200 tracking-tight">Structured Solution</h3>
-                  <p className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mt-0.5">AI-Powered Analysis</p>
-                </div>
-              </div>
-              <button 
-                onClick={() => !isCompleted && setShowQuiz(true)}
-                disabled={isCompleted}
-                className={`flex items-center gap-3 px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all ${
-                  isCompleted 
-                    ? 'bg-emerald-100 text-emerald-700 cursor-default shadow-inner' 
-                    : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-emerald-500 hover:text-emerald-600 hover:shadow-xl'
-                }`}
-              >
-                <CheckCircle2 className={`w-4 h-4 ${isCompleted ? 'text-emerald-600' : ''}`} />
-                {isCompleted ? 'Completed' : 'Mark as Done'}
-              </button>
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden animate-fadeIn">
+          <div className="bg-indigo-50 dark:bg-indigo-900/20 px-5 py-4 border-b border-indigo-100 dark:border-indigo-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <Lightbulb className="w-5 h-5 text-indigo-600 dark:text-indigo-400 shrink-0" />
+              <h3 className="font-bold text-indigo-900 dark:text-indigo-200 text-sm sm:text-base">Structured Answer</h3>
             </div>
-            <div className="p-8 sm:p-10 bg-slate-50/30 dark:bg-slate-900/50">
-              <div className="space-y-6">
-                {parseMarkdownSections(solution).map((section, index) => (
-                  <CollapsibleSection key={index} title={section.title}>
-                    <div className="prose prose-slate dark:prose-invert max-w-none
-                      prose-p:text-slate-600 dark:prose-p:text-slate-400 prose-p:leading-relaxed prose-p:text-lg
-                      prose-strong:text-slate-900 dark:prose-strong:text-white prose-strong:font-black
-                      prose-ul:list-none prose-ul:pl-0
-                      prose-li:relative prose-li:pl-8 prose-li:mb-4 dark:prose-li:text-slate-300
-                      prose-li:before:content-[''] prose-li:before:absolute prose-li:before:left-2 prose-li:before:top-3 prose-li:before:w-2 prose-li:before:h-2 prose-li:before:bg-blue-600 prose-li:before:rounded-full
-                    ">
-                      <ReactMarkdown 
-                        remarkPlugins={[remarkGfm, remarkMath]}
-                        rehypePlugins={[rehypeKatex]}
-                      >
-                        {section.content}
-                      </ReactMarkdown>
-                    </div>
-                  </CollapsibleSection>
-                ))}
-              </div>
+            <button 
+              onClick={() => !isCompleted && setShowQuiz(true)}
+              disabled={isCompleted}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all min-h-[36px] ${
+                isCompleted 
+                  ? 'bg-emerald-100 text-emerald-700 cursor-default' 
+                  : 'bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:border-emerald-500 hover:text-emerald-600 shadow-sm'
+              }`}
+            >
+              <CheckCircle2 className={`w-4 h-4 ${isCompleted ? 'text-emerald-600' : ''}`} />
+              {isCompleted ? 'Completed' : 'Mark as Completed'}
+            </button>
+          </div>
+          <div className="p-4 sm:p-6 bg-slate-50 dark:bg-slate-900">
+            <div className="space-y-4">
+              {parseMarkdownSections(solution).map((section, index) => (
+                <CollapsibleSection key={index} title={section.title}>
+                  <div className="prose prose-blue dark:prose-invert max-w-none dark:text-slate-200
+                    prose-headings:text-slate-900 dark:prose-headings:text-blue-400
+                    prose-h1:text-3xl prose-h1:font-bold prose-h1:mb-6
+                    prose-h3:text-lg prose-h3:font-semibold prose-h3:mt-6 prose-h3:mb-3
+                    prose-p:text-slate-700 dark:prose-p:text-slate-200 prose-p:leading-relaxed
+                    prose-strong:text-blue-600 dark:prose-strong:text-blue-400 prose-strong:font-bold
+                    prose-ul:list-none prose-ul:pl-0
+                    prose-li:relative prose-li:pl-6 prose-li:mb-2 dark:prose-li:text-slate-200
+                    prose-li:before:content-[''] prose-li:before:absolute prose-li:before:left-1.5 prose-li:before:top-2.5 prose-li:before:w-1.5 prose-li:before:h-1.5 prose-li:before:bg-blue-500 prose-li:before:rounded-full
+                    prose-hr:border-slate-200 dark:prose-hr:border-slate-700
+                    prose-table:w-full prose-table:border-collapse
+                    prose-th:bg-slate-100 dark:prose-th:bg-slate-800 prose-th:p-3 prose-th:text-left prose-th:border prose-th:border-slate-200 dark:prose-th:border-slate-700
+                    prose-td:p-3 prose-td:border prose-td:border-slate-200 dark:prose-td:border-slate-700
+                  ">
+                    <ReactMarkdown 
+                      remarkPlugins={[remarkGfm, remarkMath]}
+                      rehypePlugins={[rehypeKatex, rehypeRaw]}
+                    >
+                      {section.content}
+                    </ReactMarkdown>
+                  </div>
+                </CollapsibleSection>
+              ))}
             </div>
           </div>
         </div>

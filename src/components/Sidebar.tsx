@@ -23,6 +23,7 @@ interface SidebarProps {
   progress: AppProgress;
   onUpdateProgress: (newProgress: Partial<AppProgress>) => void;
   userEmail: string;
+  isDataLoaded: boolean;
 }
 
 const navItems = [
@@ -39,7 +40,7 @@ const navItems = [
   { id: 'about', label: 'About', icon: Info },
 ] as const;
 
-export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, progress, onUpdateProgress, userEmail }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, progress, onUpdateProgress, userEmail, isDataLoaded }) => {
   return (
     <div className="h-full flex flex-col py-6">
       <div className="px-6 mb-8 shrink-0">
@@ -101,6 +102,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, pro
               currentGlobalStreak={progress.streaks} 
               bestStreak={progress.bestStreak}
               userEmail={userEmail} 
+              isDataLoaded={isDataLoaded}
             />
           </div>
         </div>

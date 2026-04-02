@@ -367,6 +367,7 @@ const App: React.FC = () => {
           user={user}
           progress={progress}
           onUpdateProgress={updateProgress}
+          isDataLoaded={isDataLoaded}
         >
           {renderView()}
         </Layout>

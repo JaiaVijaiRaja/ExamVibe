@@ -8,6 +8,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
+import rehypeRaw from 'rehype-raw';
 import 'katex/dist/katex.min.css';
 
 interface SkillRoadmapProps {
@@ -106,47 +107,41 @@ export const SkillRoadmap: React.FC<SkillRoadmapProps> = ({ progress, onUpdatePr
   };
 
   return (
-    <div className="space-y-10 pb-20">
-      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 animate-slideUp">
+    <div className="space-y-8 pb-20">
+      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
-            Skill <span className="text-gradient">Roadmap</span>
-          </h2>
-          <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-[0.2em] text-xs mt-2">
-            Map out your path to mastering high-demand engineering skills
-          </p>
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Skill Development Roadmap</h2>
+          <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">Map out your path to mastering high-demand engineering skills.</p>
         </div>
         {roadmap.length > 0 && (
           <button 
             onClick={clearRoadmap}
-            className="flex items-center gap-2 px-5 py-2.5 text-xs font-black uppercase tracking-widest text-slate-500 hover:text-red-600 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl transition-all hover:shadow-xl"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-slate-500 dark:text-slate-400 hover:text-red-500 transition-colors bg-slate-100 dark:bg-slate-800 rounded-lg min-h-[40px]"
           >
-            <RefreshCw className="w-4 h-4" /> Reset
+            <RefreshCw className="w-4 h-4" /> Reset Roadmap
           </button>
         )}
       </header>
 
       {roadmap.length === 0 ? (
-        <div className="glass-card p-8 sm:p-12 animate-slideUp relative overflow-hidden group" style={{ animationDelay: '0.1s' }}>
-          <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-400/10 rounded-full blur-3xl -mr-48 -mt-48 pointer-events-none group-hover:scale-110 transition-transform duration-1000"></div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
+        <div className="bg-white dark:bg-slate-800 p-5 sm:p-8 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 animate-fadeIn">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6">
             <div className="md:col-span-1">
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Target Skill</label>
+              <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Target Skill</label>
               <input 
                 type="text" 
                 value={skill}
                 onChange={(e) => setSkill(e.target.value)}
                 placeholder="e.g. AWS Cloud, React, FPGA"
-                className="w-full px-6 py-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all shadow-inner placeholder:text-slate-300 dark:placeholder:text-slate-600"
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none text-base min-h-[44px]"
               />
             </div>
             <div className="md:col-span-1">
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Current Level</label>
+              <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Current Level</label>
               <select 
                 value={level}
                 onChange={(e) => setLevel(e.target.value)}
-                className="w-full px-6 py-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all shadow-inner appearance-none cursor-pointer"
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none text-base min-h-[44px] appearance-none"
               >
                 <option>Beginner</option>
                 <option>Intermediate</option>
@@ -154,119 +149,111 @@ export const SkillRoadmap: React.FC<SkillRoadmapProps> = ({ progress, onUpdatePr
               </select>
             </div>
             <div className="md:col-span-1">
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Ultimate Goal</label>
+              <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Ultimate Goal</label>
               <input 
                 type="text" 
                 value={goal}
                 onChange={(e) => setGoal(e.target.value)}
                 placeholder="e.g. Land a job, Build a drone"
-                className="w-full px-6 py-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all shadow-inner placeholder:text-slate-300 dark:placeholder:text-slate-600"
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none text-base min-h-[44px]"
               />
             </div>
           </div>
           <button 
             onClick={handleGenerate}
             disabled={loading || !skill || !goal}
-            className="mt-10 w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase tracking-widest py-5 px-10 rounded-2xl flex items-center justify-center gap-3 transition-all shadow-2xl shadow-emerald-500/30 disabled:opacity-50 disabled:shadow-none transform hover:-translate-y-1 active:scale-95"
+            className="mt-8 w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-10 rounded-xl flex items-center justify-center gap-3 transition-all disabled:opacity-50 shadow-lg shadow-emerald-500/20 min-h-[48px]"
           >
-            {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Target className="w-6 h-6" />}
+            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Target className="w-5 h-5" />}
             Generate Weekly Roadmap
           </button>
         </div>
       ) : (
-        <div className="space-y-8 animate-slideUp" style={{ animationDelay: '0.1s' }}>
-          <div className="flex items-center gap-6 p-6 bg-emerald-50/50 dark:bg-emerald-900/10 rounded-[2rem] border border-emerald-100 dark:border-emerald-800/30">
-            <div className="w-14 h-14 bg-emerald-100 dark:bg-emerald-900/30 rounded-2xl flex items-center justify-center shadow-inner">
-              <Target className="w-7 h-7 text-emerald-600 dark:text-emerald-400" />
+        <div className="space-y-6 animate-fadeIn">
+          <div className="flex items-center gap-4 p-5 bg-emerald-50 dark:bg-emerald-900/10 rounded-2xl border border-emerald-100 dark:border-emerald-800">
+            <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
+              <Target className="w-6 h-6 text-emerald-600" />
             </div>
             <div>
-              <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Mastering {skill}</h3>
-              <p className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mt-1">Track your weekly milestones below</p>
+              <h3 className="font-bold text-slate-900 dark:text-white">Active Roadmap: {skill}</h3>
+              <p className="text-xs text-slate-500 font-medium">Track your weekly milestones below</p>
             </div>
           </div>
           
-          <div className="space-y-6">
-            {roadmap.map((item) => {
-              const isDone = !!(progress.completedRoadmapWeeks || {})[`${skill}-${item.week}`];
-              return (
+          {roadmap.map((item) => {
+            const isDone = !!(progress.completedRoadmapWeeks || {})[`${skill}-${item.week}`];
+            return (
+              <div 
+                key={item.week} 
+                className={`group relative bg-white dark:bg-slate-800 rounded-2xl border overflow-hidden shadow-sm flex flex-col md:flex-row transition-all ${isDone ? 'border-emerald-500/50 opacity-80' : 'border-slate-200 dark:border-slate-700'}`}
+              >
                 <div 
-                  key={item.week} 
-                  className={`group relative bg-white dark:bg-slate-800 rounded-[2rem] border overflow-hidden shadow-sm flex flex-col md:flex-row transition-all duration-500 ${isDone ? 'border-emerald-500/30 opacity-70' : 'border-slate-100 dark:border-slate-800 hover:border-blue-200 dark:hover:border-blue-900/50 hover:shadow-2xl'}`}
+                  onClick={() => handleToggleClick(item)}
+                  className={`md:w-32 p-6 flex flex-row md:flex-col items-center justify-between md:justify-center border-b md:border-b-0 md:border-r transition-colors cursor-pointer min-h-[60px] ${isDone ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-800' : 'bg-slate-50 dark:bg-slate-700/50 border-slate-100 dark:border-slate-700'}`}
                 >
-                  <div 
-                    onClick={() => handleToggleClick(item)}
-                    className={`md:w-40 p-8 flex flex-row md:flex-col items-center justify-between md:justify-center border-b md:border-b-0 md:border-r transition-all cursor-pointer ${isDone ? 'bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-800/30' : 'bg-slate-50/50 dark:bg-slate-800/30 border-slate-100 dark:border-slate-800/50 group-hover:bg-blue-50/30 dark:group-hover:bg-blue-900/10'}`}
-                  >
-                    <div className="flex flex-col items-center">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-blue-500 transition-colors">Week</span>
-                      <span className={`text-5xl font-black transition-colors ${isDone ? 'text-emerald-600' : 'text-slate-300 dark:text-slate-700 group-hover:text-blue-600'}`}>{item.week}</span>
-                    </div>
-                    {isDone ? (
-                      <CheckCircle2 className="w-10 h-10 text-emerald-500 mt-4" />
-                    ) : (
-                      <div className="w-10 h-10 rounded-2xl border-2 border-slate-200 dark:border-slate-700 md:mt-4 group-hover:border-blue-400 transition-all flex items-center justify-center">
-                        <div className="w-2 h-2 bg-blue-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                      </div>
-                    )}
+                  <div className="flex flex-col items-center">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Week</span>
+                    <span className="text-3xl sm:text-4xl font-black text-emerald-700 dark:text-emerald-300">{item.week}</span>
                   </div>
-                  <div className="flex-1 p-8 sm:p-10 space-y-8">
-                    <div>
-                      <h3 className={`text-2xl font-black text-slate-900 dark:text-white mb-4 tracking-tight leading-tight ${isDone ? 'line-through text-slate-400' : ''}`}>{item.topic}</h3>
-                      <div className="prose prose-slate dark:prose-invert max-w-none
-                        prose-p:text-slate-600 dark:prose-p:text-slate-400 prose-p:leading-relaxed prose-p:text-lg prose-p:m-0
-                        prose-strong:text-slate-900 dark:prose-strong:text-white prose-strong:font-black
+                  {isDone ? (
+                    <CheckCircle2 className="w-7 h-7 text-emerald-500" />
+                  ) : (
+                    <div className="w-7 h-7 rounded-full border-2 border-slate-300 dark:border-slate-600 md:mt-2" />
+                  )}
+                </div>
+                <div className="flex-1 p-5 sm:p-6 space-y-5">
+                  <div className="flex justify-between items-start">
+                    <div className="w-full">
+                      <h3 className={`text-lg sm:text-xl font-bold text-slate-900 dark:text-white mb-2 leading-tight ${isDone ? 'line-through text-slate-400' : ''}`}>{item.topic}</h3>
+                      <div className="prose prose-sm prose-blue dark:prose-invert max-w-none dark:text-slate-200
+                        prose-p:text-slate-600 dark:prose-p:text-slate-400 prose-p:leading-relaxed prose-p:m-0
+                        prose-strong:text-blue-600 dark:prose-strong:text-blue-400 prose-strong:font-bold
                       ">
                         <ReactMarkdown 
                           remarkPlugins={[remarkGfm, remarkMath]}
-                          rehypePlugins={[rehypeKatex]}
+                          rehypePlugins={[rehypeKatex, rehypeRaw]}
                         >
                           {item.description}
                         </ReactMarkdown>
                       </div>
                     </div>
-                    
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 pt-8 border-t border-slate-50 dark:border-slate-800">
-                      <div>
-                        <h4 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-3 text-slate-400 mb-5">
-                          <div className="w-6 h-6 bg-blue-50 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
-                            <Link className="w-3.5 h-3.5 text-blue-600" />
-                          </div>
-                          Learning Resources
-                        </h4>
-                        <ul className="space-y-3">
-                          {item.resources.map((res, i) => (
-                            <li key={i} className="text-sm text-blue-600 dark:text-blue-400 flex items-center gap-3 hover:underline cursor-pointer bg-blue-50/30 dark:bg-blue-900/10 p-3 rounded-xl transition-all hover:translate-x-1">
-                              <ExternalLink className="w-4 h-4 shrink-0" /> 
-                              <span className="truncate font-bold">{res}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                      <div>
-                        <h4 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-3 text-slate-400 mb-5">
-                          <div className="w-6 h-6 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg flex items-center justify-center">
-                            <Box className="w-3.5 h-3.5 text-emerald-600" />
-                          </div>
-                          Micro Project
-                        </h4>
-                        <div className="text-sm text-slate-600 dark:text-slate-400 bg-slate-50/50 dark:bg-slate-800/50 p-6 rounded-2xl border border-slate-100 dark:border-slate-700/50 prose prose-slate dark:prose-invert max-w-none
-                          prose-p:m-0 prose-p:leading-relaxed prose-p:font-bold prose-p:text-sm
-                          prose-strong:text-slate-900 dark:prose-strong:text-white prose-strong:font-black
-                        ">
-                          <ReactMarkdown 
-                            remarkPlugins={[remarkGfm, remarkMath]}
-                            rehypePlugins={[rehypeKatex]}
-                          >
-                            {item.project}
-                          </ReactMarkdown>
-                        </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-4 border-t border-slate-100 dark:border-slate-700">
+                    <div>
+                      <h4 className="text-xs font-black uppercase tracking-widest flex items-center gap-2 text-slate-500 dark:text-slate-400 mb-3">
+                        <Link className="w-3.5 h-3.5" /> Resources
+                      </h4>
+                      <ul className="space-y-2">
+                        {item.resources.map((res, i) => (
+                          <li key={i} className="text-sm text-blue-600 dark:text-blue-400 flex items-center gap-2 hover:underline cursor-pointer bg-blue-50/50 dark:bg-blue-900/10 p-2 rounded-lg min-h-[36px]">
+                            <ExternalLink className="w-3.5 h-3.5 shrink-0" /> 
+                            <span className="truncate font-medium">{res}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-black uppercase tracking-widest flex items-center gap-2 text-slate-500 dark:text-slate-400 mb-3">
+                        <Box className="w-3.5 h-3.5" /> Micro Project
+                      </h4>
+                      <div className="text-sm text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-700/50 p-4 rounded-xl border border-slate-100 dark:border-slate-600 prose prose-sm prose-blue dark:prose-invert max-w-none dark:text-slate-200
+                        prose-p:m-0 prose-p:leading-relaxed
+                        prose-strong:text-blue-600 dark:prose-strong:text-blue-400 prose-strong:font-bold
+                      ">
+                        <ReactMarkdown 
+                          remarkPlugins={[remarkGfm, remarkMath]}
+                          rehypePlugins={[rehypeKatex, rehypeRaw]}
+                        >
+                          {item.project}
+                        </ReactMarkdown>
                       </div>
                     </div>
                   </div>
                 </div>
-              );
-            })}
-          </div>
+              </div>
+            );
+          })}
         </div>
       )}
 

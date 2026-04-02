@@ -3,11 +3,12 @@ import React, { useState } from 'react';
 import { geminiService } from '../services/geminiService';
 import { AppProgress } from '../types';
 import { QuizModal } from '../components/QuizModal';
-import { Loader2, AlertTriangle, ListChecks, HelpCircle, CheckCircle2, ChevronDown, ChevronRight, Star } from 'lucide-react';
+import { Loader2, AlertTriangle, ListChecks, HelpCircle, CheckCircle2, ChevronDown, ChevronRight } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
+import rehypeRaw from 'rehype-raw';
 import 'katex/dist/katex.min.css';
 
 // Helper component for collapsible sections
@@ -15,18 +16,16 @@ const CollapsibleSection = ({ title, children }: { title: string, children: Reac
   const [isOpen, setIsOpen] = useState(true);
 
   return (
-    <div className="mb-6 rounded-[2rem] overflow-hidden bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all duration-500">
+    <div className="mb-6 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden bg-white dark:bg-slate-800">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between p-6 sm:p-8 bg-slate-50/50 dark:bg-slate-900/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all group"
+        className="w-full flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors border-l-4 border-l-blue-500"
       >
-        <h2 className="text-xl font-black text-slate-900 dark:text-white m-0 tracking-tight group-hover:text-amber-600 transition-colors">{title}</h2>
-        <div className={`w-10 h-10 rounded-xl bg-white dark:bg-slate-800 flex items-center justify-center shadow-sm transition-transform duration-500 ${isOpen ? 'rotate-180' : ''}`}>
-          <ChevronDown className="w-5 h-5 text-slate-400" />
-        </div>
+        <h2 className="text-xl font-bold text-slate-900 dark:text-white m-0">{title}</h2>
+        {isOpen ? <ChevronDown className="w-5 h-5 text-slate-500" /> : <ChevronRight className="w-5 h-5 text-slate-500" />}
       </button>
       {isOpen && (
-        <div className="p-8 sm:p-10 border-t border-slate-100 dark:border-slate-800 animate-fadeIn">
+        <div className="p-6 border-t border-slate-200 dark:border-slate-700">
           {children}
         </div>
       )}
@@ -125,135 +124,98 @@ export const Predictor: React.FC<PredictorProps> = ({ progress, onUpdateProgress
   };
 
   return (
-    <div className="space-y-10 pb-20">
-      <header className="space-y-3 animate-slideUp">
-        <h2 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
-          Exam <span className="text-gradient">Predictor</span>
-        </h2>
-        <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-[0.2em] text-xs">
-          AI analysis to pinpoint high-probability exam topics
-        </p>
+    <div className="space-y-8 pb-20">
+      <header className="space-y-2">
+        <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Exam Question Predictor</h2>
+        <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">AI analysis of your syllabus to pinpoint high-probability exam topics.</p>
       </header>
 
-      <div className="glass-card p-8 sm:p-12 animate-slideUp relative overflow-hidden group" style={{ animationDelay: '0.1s' }}>
-        <div className="absolute top-0 right-0 w-96 h-96 bg-amber-400/10 rounded-full blur-3xl -mr-48 -mt-48 pointer-events-none group-hover:scale-110 transition-transform duration-1000"></div>
-        
-        <div className="relative z-10 space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-3">
-              <label className="block text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Subject Name</label>
-              <input 
-                type="text" 
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                placeholder="e.g. Signal Processing"
-                className="w-full px-6 py-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-amber-500/10 focus:border-amber-500 outline-none transition-all shadow-inner placeholder:text-slate-300 dark:placeholder:text-slate-600"
-              />
-            </div>
-            <div className="space-y-3">
-              <label className="block text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Analysis Mode</label>
-              <div className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
-                <div className="w-10 h-10 bg-amber-100 dark:bg-amber-900/30 rounded-xl flex items-center justify-center">
-                  <AlertTriangle className="w-5 h-5 text-amber-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-black text-slate-900 dark:text-white">Pattern Recognition</p>
-                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Active AI Analysis</p>
-                </div>
-              </div>
-            </div>
+      <div className="bg-white dark:bg-slate-800 p-5 sm:p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 animate-fadeIn">
+        <div className="space-y-6">
+          <div>
+            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Subject</label>
+            <input 
+              type="text" 
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              placeholder="e.g. Signal Processing"
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500 outline-none text-base"
+            />
           </div>
-
-          <div className="space-y-3">
-            <label className="block text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Syllabus Snippet</label>
+          <div>
+            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Syllabus Snippet (or key topics)</label>
             <textarea 
               value={syllabus}
               onChange={(e) => setSyllabus(e.target.value)}
               placeholder="Paste the key modules or chapters from your syllabus..."
               rows={6}
-              className="w-full px-6 py-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-amber-500/10 focus:border-amber-500 outline-none resize-none transition-all shadow-inner placeholder:text-slate-300 dark:placeholder:text-slate-600"
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500 outline-none resize-none text-base"
             />
           </div>
-
           <button 
             onClick={handlePredict}
             disabled={loading || !subject || !syllabus}
-            className="w-full premium-gradient text-white font-black uppercase tracking-widest py-5 rounded-2xl flex items-center justify-center gap-3 transition-all shadow-2xl shadow-amber-500/30 disabled:opacity-50 disabled:shadow-none transform hover:-translate-y-1 active:scale-95"
+            className="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-50 shadow-lg shadow-amber-500/20 min-h-[44px]"
           >
-            {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Star className="w-6 h-6" />}
+            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <AlertTriangle className="w-5 h-5" />}
             Analyze Patterns & Predict
           </button>
         </div>
       </div>
 
       {predictions && (
-        <div className="space-y-8 animate-slideUp" style={{ animationDelay: '0.2s' }}>
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 px-4">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-amber-100 dark:bg-amber-900/30 rounded-2xl flex items-center justify-center shadow-inner">
-                <HelpCircle className="w-6 h-6 text-amber-600" />
-              </div>
-              <div>
-                <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Likely Questions</h3>
-                <p className="text-xs font-black text-slate-400 uppercase tracking-widest">{subject}</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-4">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border-2 border-amber-100 dark:border-amber-900/30 shadow-xl overflow-hidden animate-fadeIn">
+          <div className="bg-amber-50 dark:bg-amber-900/20 px-5 sm:px-8 py-4 sm:py-6 border-b border-amber-100 dark:border-amber-900/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <h3 className="text-lg sm:text-xl font-bold flex items-center gap-3 text-amber-800 dark:text-amber-400">
+              <HelpCircle className="w-6 h-6 shrink-0" /> Likely Questions for {subject}
+            </h3>
+            <div className="flex items-center justify-between sm:justify-end gap-4">
               <button 
                 onClick={() => !isCompleted && setShowQuiz(true)}
                 disabled={isCompleted}
-                className={`flex items-center gap-3 px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-sm ${
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all min-h-[36px] ${
                   isCompleted 
-                    ? 'bg-emerald-500 text-white shadow-emerald-500/20' 
-                    : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-emerald-500 hover:text-emerald-600 hover:shadow-xl'
+                    ? 'bg-emerald-100 text-emerald-700 cursor-default' 
+                    : 'bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:border-emerald-500 hover:text-emerald-600 shadow-sm'
                 }`}
               >
-                <CheckCircle2 className="w-4 h-4" />
-                {isCompleted ? 'Completed' : 'Mark Complete'}
+                <CheckCircle2 className={`w-4 h-4 ${isCompleted ? 'text-emerald-600' : ''}`} />
+                {isCompleted ? 'Completed' : 'Mark as Completed'}
               </button>
-              <div className="px-4 py-2 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-inner">
-                AI Forecast
-              </div>
+              <span className="px-3 py-1 bg-amber-200 dark:bg-amber-800 text-amber-900 dark:text-amber-100 rounded-full text-[10px] font-black uppercase tracking-wider">AI Forecast</span>
             </div>
           </div>
-
-          <div className="grid grid-cols-1 gap-6">
-            {parseMarkdownSections(predictions).map((section, index) => (
-              <CollapsibleSection key={index} title={section.title}>
-                <div className="prose prose-slate dark:prose-invert max-w-none dark:text-slate-200
-                  prose-headings:text-slate-900 dark:prose-headings:text-amber-400 prose-headings:font-black prose-headings:tracking-tight
-                  prose-p:text-slate-600 dark:prose-p:text-slate-300 prose-p:leading-relaxed prose-p:font-bold
-                  prose-strong:text-slate-900 dark:prose-strong:text-white prose-strong:font-black
-                  prose-ul:list-none prose-ul:pl-0
-                  prose-li:relative prose-li:pl-8 prose-li:mb-4 prose-li:font-bold
-                  prose-li:before:content-[''] prose-li:before:absolute prose-li:before:left-0 prose-li:before:top-2.5 prose-li:before:w-2.5 prose-li:before:h-2.5 prose-li:before:bg-amber-500 prose-li:before:rounded-full prose-li:before:shadow-lg prose-li:before:shadow-amber-500/50
-                  prose-hr:border-slate-100 dark:prose-hr:border-slate-800
-                  prose-table:w-full prose-table:border-collapse prose-table:rounded-2xl prose-table:overflow-hidden
-                  prose-th:bg-slate-50 dark:prose-th:bg-slate-900 prose-th:p-4 prose-th:text-left prose-th:border prose-th:border-slate-100 dark:prose-th:border-slate-800 prose-th:font-black prose-th:uppercase prose-th:tracking-widest prose-th:text-[10px]
-                  prose-td:p-4 prose-td:border prose-td:border-slate-100 dark:prose-td:border-slate-800 prose-td:font-bold
-                ">
-                  <ReactMarkdown 
-                    remarkPlugins={[remarkGfm, remarkMath]}
-                    rehypePlugins={[rehypeKatex]}
-                  >
-                    {section.content}
-                  </ReactMarkdown>
-                </div>
-              </CollapsibleSection>
-            ))}
+          <div className="p-4 sm:p-6 bg-slate-50 dark:bg-slate-900">
+            <div className="space-y-4">
+              {parseMarkdownSections(predictions).map((section, index) => (
+                <CollapsibleSection key={index} title={section.title}>
+                  <div className="prose prose-blue dark:prose-invert max-w-none dark:text-slate-200
+                    prose-headings:text-slate-900 dark:prose-headings:text-blue-400
+                    prose-h1:text-3xl prose-h1:font-bold prose-h1:mb-6
+                    prose-h3:text-lg prose-h3:font-semibold prose-h3:mt-6 prose-h3:mb-3
+                    prose-p:text-slate-700 dark:prose-p:text-slate-200 prose-p:leading-relaxed
+                    prose-strong:text-blue-600 dark:prose-strong:text-blue-400 prose-strong:font-bold
+                    prose-ul:list-none prose-ul:pl-0
+                    prose-li:relative prose-li:pl-6 prose-li:mb-2 dark:prose-li:text-slate-200
+                    prose-li:before:content-[''] prose-li:before:absolute prose-li:before:left-1.5 prose-li:before:top-2.5 prose-li:before:w-1.5 prose-li:before:h-1.5 prose-li:before:bg-blue-500 prose-li:before:rounded-full
+                    prose-hr:border-slate-200 dark:prose-hr:border-slate-700
+                    prose-table:w-full prose-table:border-collapse
+                    prose-th:bg-slate-100 dark:prose-th:bg-slate-800 prose-th:p-3 prose-th:text-left prose-th:border prose-th:border-slate-200 dark:prose-th:border-slate-700
+                    prose-td:p-3 prose-td:border prose-td:border-slate-200 dark:prose-td:border-slate-700
+                  ">
+                    <ReactMarkdown 
+                      remarkPlugins={[remarkGfm, remarkMath]}
+                      rehypePlugins={[rehypeKatex, rehypeRaw]}
+                    >
+                      {section.content}
+                    </ReactMarkdown>
+                  </div>
+                </CollapsibleSection>
+              ))}
+            </div>
           </div>
         </div>
       )}
-
-      <div className="flex items-start gap-5 p-8 bg-slate-50 dark:bg-slate-900/50 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 animate-slideUp" style={{ animationDelay: '0.3s' }}>
-        <div className="w-12 h-12 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center shadow-sm shrink-0">
-          <ListChecks className="w-6 h-6 text-slate-400" />
-        </div>
-        <p className="text-slate-500 dark:text-slate-400 text-sm font-bold leading-relaxed italic">
-          Note: Predictions are based on syllabus structure and common engineering education patterns. Use this as a supplemental study guide alongside thorough preparation.
-        </p>
-      </div>
 
       {showQuiz && (
         <QuizModal 
