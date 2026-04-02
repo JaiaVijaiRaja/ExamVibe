@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { User } from '../types';
-import { LogIn, UserCircle, GraduationCap, Mail, ShieldCheck, ArrowRight, Loader2, KeyRound } from 'lucide-react';
+import { LogIn, UserCircle, GraduationCap, Mail, ShieldCheck, ArrowRight, Loader2, KeyRound, Sparkles, BookOpen, Target, Trophy } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface LoginProps {
@@ -34,7 +34,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
   };
 
   const validateEmail = (email: string) => {
-    return email.toLowerCase().endsWith('.edu.in');
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -59,9 +59,9 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
           .maybeSingle();
 
         if (!existingUser) {
-          showError('You need to sign up first');
+          showError('Email not registered. Please SIGN UP first.');
         } else {
-          showError('Invalid email or password.');
+          showError('PASSWORD IS WRONG');
         }
         setLoading(false);
         return;
@@ -89,37 +89,10 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
         joinedAt: userInfo?.joinedAt || new Date().toISOString()
       });
     } catch (err: any) {
-      showError(err.message || 'Invalid email or password.');
+      showError(err.message || 'An unexpected error occurred during login.');
     } finally {
       setLoading(false);
     }
-  };
-
-  const callOtpFunction = async (payload: { email: string; type: 'signup' | 'reset'; otp?: string }) => {
-    const { data, error } = await supabase.functions.invoke('verify-otp', {
-      body: payload,
-    });
-    
-    if (error) {
-      console.error('Edge Function Invocation Error:', error);
-      let message = error.message;
-      
-      // Try to parse the error message if it's a JSON string from the Edge Function
-      if (error.context) {
-        try {
-          const body = await error.context.json();
-          if (body && body.error) message = body.error;
-        } catch (e) {
-          // If parsing fails, try to get text
-          try {
-            const text = await error.context.text();
-            if (text) message = text;
-          } catch (e2) {}
-        }
-      }
-      throw new Error(message);
-    }
-    return data;
   };
 
   const handleSignupInfo = async (e: React.FormEvent) => {
@@ -128,7 +101,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
     const cleanEmail = email.toLowerCase().trim();
     if (!validateEmail(cleanEmail)) {
-      showError('Only college email IDs ending with .edu.in are allowed.');
+      showError('Please enter a valid email address.');
       return;
     }
 
@@ -142,13 +115,31 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
         .maybeSingle();
 
       if (existingUser?.user_info) {
-        showInfo('The email is already signed up');
+        showError('Email ID is already signed up. Please log in.');
         setLoading(false);
         return;
       }
 
-      // Call our custom Edge Function to send OTP via Brevo
-      await callOtpFunction({ email: cleanEmail, type: 'signup' });
+      const { error: otpError } = await supabase.auth.signInWithOtp({
+        email: cleanEmail,
+        options: {
+          shouldCreateUser: true,
+          data: {
+            name: name.trim(),
+            major: major,
+          }
+        },
+      });
+
+      if (otpError) {
+        if (otpError.message.toLowerCase().includes('rate limit')) {
+          showError('Rate limit exceeded. Please check your email for a previously sent code, or wait an hour.');
+          setSignupStep('verify');
+          setLoading(false);
+          return;
+        }
+        throw otpError;
+      }
       
       setSignupStep('verify');
     } catch (err: any) {
@@ -164,22 +155,37 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
     const cleanEmail = email.toLowerCase().trim();
     if (!validateEmail(cleanEmail)) {
-      showError('Only college email IDs ending with .edu.in are allowed.');
+      showError('Please enter a valid email address.');
       return;
     }
 
     setLoading(true);
     try {
-      // Call our custom Edge Function to send OTP via Brevo
-      await callOtpFunction({ email: cleanEmail, type: 'reset' });
+      const { error: otpError } = await supabase.auth.signInWithOtp({
+        email: cleanEmail,
+        options: {
+          shouldCreateUser: false
+        }
+      });
+
+      if (otpError) {
+        if (otpError.message.toLowerCase().includes('rate limit')) {
+          showError('Rate limit exceeded. Please check your email for a previously sent code, or wait an hour.');
+          setForgotStep('verify');
+          setLoading(false);
+          return;
+        }
+        if (otpError.message.toLowerCase().includes('signups not allowed') || otpError.message.toLowerCase().includes('user not found')) {
+          showError('Email not registered. Please SIGN UP first.');
+          setLoading(false);
+          return;
+        }
+        throw otpError;
+      }
       
       setForgotStep('verify');
     } catch (err: any) {
-      if (err.message?.toLowerCase().includes('user not found')) {
-        showError('You need to sign up first');
-      } else {
-        showError(err.message || 'Failed to send verification code.');
-      }
+      showError(err.message || 'Failed to send verification code.');
     } finally {
       setLoading(false);
     }
@@ -191,22 +197,15 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
     setLoading(true);
 
     const cleanEmail = email.toLowerCase().trim();
-    const type = authMode === 'forgot-password' ? 'reset' : 'signup';
 
     try {
-      // Call our custom Edge Function to verify OTP
-      const data = await callOtpFunction({ email: cleanEmail, type, otp });
+      const { error: verifyError } = await supabase.auth.verifyOtp({
+        email: cleanEmail,
+        token: otp,
+        type: 'email',
+      });
 
-      if (data.session) {
-        // Set the session returned by the edge function
-        const { error: sessionError } = await supabase.auth.setSession({
-          access_token: data.session.access_token,
-          refresh_token: data.session.refresh_token,
-        });
-        if (sessionError) throw sessionError;
-      } else {
-        throw new Error('Failed to create session');
-      }
+      if (verifyError) throw verifyError;
 
       // OTP verified, move to password setup
       if (authMode === 'forgot-password') {
@@ -215,7 +214,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
         setSignupStep('password');
       }
     } catch (err: any) {
-      showError(err.message || 'Invalid or expired verification code. Please try again.');
+      showError('Invalid or expired verification code. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -233,11 +232,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
     setLoading(true);
     try {
       const { error: updateError } = await supabase.auth.updateUser({
-        password: password,
-        data: {
-          name: name.trim(),
-          major: major,
-        }
+        password: password
       });
 
       if (updateError) throw updateError;
@@ -274,14 +269,59 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900 p-4">
-      <div className="max-w-md w-full bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8 border border-slate-200 dark:border-slate-700">
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <GraduationCap className="w-10 h-10 text-blue-600 dark:text-blue-400" />
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900 p-4 relative overflow-hidden">
+      {/* Subtle Grid Pattern */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
+
+      {/* Blurred Background Elements */}
+      <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-blue-400/30 dark:bg-blue-600/20 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-pulse"></div>
+      <div className="absolute top-[20%] right-[-10%] w-96 h-96 bg-purple-400/30 dark:bg-purple-600/20 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-pulse" style={{ animationDelay: '2s' }}></div>
+      <div className="absolute bottom-[-20%] left-[20%] w-96 h-96 bg-emerald-400/30 dark:bg-emerald-600/20 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-pulse" style={{ animationDelay: '4s' }}></div>
+
+      {/* Floating Decorative Elements (Desktop Only) */}
+      <div className="hidden lg:block absolute top-1/4 left-[10%] animate-bounce" style={{ animationDuration: '3s' }}>
+        <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md p-4 rounded-2xl shadow-xl border border-white/50 dark:border-slate-700/50 flex items-center gap-3 transform -rotate-6">
+          <div className="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-lg text-blue-600 dark:text-blue-400">
+            <Sparkles className="w-6 h-6" />
           </div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">EXAMVIBE</h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-2">
+          <div>
+            <p className="text-sm font-bold text-slate-900 dark:text-white">AI Study Planner</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Auto-generate schedules</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="hidden lg:block absolute bottom-1/4 right-[10%] animate-bounce" style={{ animationDuration: '4s' }}>
+        <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md p-4 rounded-2xl shadow-xl border border-white/50 dark:border-slate-700/50 flex items-center gap-3 transform rotate-6">
+          <div className="p-2 bg-purple-100 dark:bg-purple-900/50 rounded-lg text-purple-600 dark:text-purple-400">
+            <BookOpen className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-sm font-bold text-slate-900 dark:text-white">Smart Notes</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Instant summaries</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="hidden lg:block absolute top-1/3 right-[15%] animate-pulse" style={{ animationDuration: '5s' }}>
+        <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md p-3 rounded-full shadow-lg border border-white/50 dark:border-slate-700/50 text-emerald-600 dark:text-emerald-400">
+          <Target className="w-8 h-8" />
+        </div>
+      </div>
+
+      <div className="hidden lg:block absolute bottom-1/3 left-[15%] animate-pulse" style={{ animationDuration: '6s' }}>
+        <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md p-3 rounded-full shadow-lg border border-white/50 dark:border-slate-700/50 text-amber-500 dark:text-amber-400">
+          <Trophy className="w-8 h-8" />
+        </div>
+      </div>
+
+      <div className="max-w-md w-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-2xl shadow-2xl p-6 sm:p-8 border border-white/50 dark:border-slate-700/50 relative z-10">
+        <div className="text-center mb-6 sm:mb-8">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-blue-100 dark:bg-blue-900/30 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4">
+            <GraduationCap className="w-8 h-8 sm:w-10 sm:h-10 text-blue-600 dark:text-blue-400" />
+          </div>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">EXAMVIBE</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 sm:mt-2 px-2">
             {authMode === 'login' 
               ? 'Welcome back! Please log in.' 
               : authMode === 'forgot-password'
@@ -299,7 +339,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
         </div>
 
         {error && (
-          <div className={`mb-6 p-3 border text-sm rounded-lg flex items-center gap-2 ${
+          <div className={`mb-6 p-3 border text-xs sm:text-sm rounded-lg flex items-center gap-2 ${
             messageType === 'info' 
               ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400'
               : 'bg-red-50 dark:bg-red-900/20 border-red-100 dark:border-red-800 text-red-600 dark:text-red-400'
@@ -312,7 +352,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
         {authMode === 'login' && (
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">College Email (.edu.in)</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email Address</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                 <input
@@ -320,8 +360,8 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
-                  placeholder="student@college.edu.in"
+                  className="w-full pl-10 pr-4 py-2.5 sm:py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none text-base"
+                  placeholder="student@example.com"
                 />
               </div>
             </div>
@@ -336,7 +376,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     setForgotStep('email');
                     setError(null);
                   }}
-                  className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                  className="text-xs text-blue-600 dark:text-blue-400 hover:underline min-h-[32px] flex items-center"
                 >
                   Forgot Password?
                 </button>
@@ -348,7 +388,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full pl-10 pr-4 py-2.5 sm:py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none text-base"
                   placeholder="••••••••"
                 />
               </div>
@@ -357,7 +397,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-200 dark:shadow-none"
+              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold py-3 sm:py-3 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-200 dark:shadow-none min-h-[48px]"
             >
               {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <LogIn className="w-5 h-5" />}
               Login
@@ -370,7 +410,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                   setAuthMode('signup');
                   setError(null);
                 }}
-                className="text-sm text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                className="text-sm text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors min-h-[44px] w-full"
               >
                 Don't have an account? Sign up
               </button>
@@ -383,7 +423,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
             {forgotStep === 'email' && (
               <form onSubmit={handleForgotPasswordEmail} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">College Email (.edu.in)</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email Address</label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                     <input
@@ -391,8 +431,8 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
-                      placeholder="student@college.edu.in"
+                      className="w-full pl-10 pr-4 py-2.5 sm:py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none text-base"
+                      placeholder="student@example.com"
                     />
                   </div>
                 </div>
@@ -400,7 +440,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-200 dark:shadow-none"
+                  className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-200 dark:shadow-none min-h-[48px]"
                 >
                   {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ShieldCheck className="w-5 h-5" />}
                   Send Reset Code
@@ -413,7 +453,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                       setAuthMode('login');
                       setError(null);
                     }}
-                    className="text-sm text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                    className="text-sm text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors min-h-[44px] w-full"
                   >
                     Back to login
                   </button>
@@ -423,21 +463,21 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
             {forgotStep === 'verify' && (
               <form onSubmit={handleVerifyOtp} className="space-y-4">
-                <div className="text-center mb-4">
+                <div className="text-center mb-4 px-2">
                   <p className="text-sm text-slate-600 dark:text-slate-400">
                     We sent a verification code to <br />
-                    <span className="font-semibold text-slate-900 dark:text-white">{email}</span>
+                    <span className="font-semibold text-slate-900 dark:text-white break-all">{email}</span>
                   </p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Verification Code</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 text-center">Verification Code</label>
                   <input
                     type="text"
                     required
                     value={otp}
                     onChange={(e) => setOtp(e.target.value)}
-                    className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-center text-2xl tracking-widest focus:ring-2 focus:ring-blue-500 outline-none"
+                    className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-center text-2xl tracking-widest focus:ring-2 focus:ring-blue-500 outline-none"
                     placeholder="000000"
                   />
                 </div>
@@ -445,7 +485,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-200 dark:shadow-none"
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-200 dark:shadow-none min-h-[48px]"
                 >
                   {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowRight className="w-5 h-5" />}
                   Verify Code
@@ -454,7 +494,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 <button
                   type="button"
                   onClick={() => setForgotStep('email')}
-                  className="w-full text-slate-500 text-sm hover:underline"
+                  className="w-full text-slate-500 text-sm hover:underline min-h-[44px]"
                 >
                   Back to email
                 </button>
@@ -463,7 +503,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
             {forgotStep === 'password' && (
               <form onSubmit={handleSetPassword} className="space-y-4">
-                <div className="text-center mb-4">
+                <div className="text-center mb-4 px-2">
                   <p className="text-sm text-slate-600 dark:text-slate-400">
                     Email verified! Now set a new password for your account.
                   </p>
@@ -478,7 +518,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                       required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                      className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none text-base"
                       placeholder="••••••••"
                       minLength={6}
                     />
@@ -488,7 +528,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-200 dark:shadow-none"
+                  className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-200 dark:shadow-none min-h-[48px]"
                 >
                   {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ShieldCheck className="w-5 h-5" />}
                   Set New Password
@@ -511,14 +551,14 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                       required
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                      className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none text-base"
                       placeholder="John Doe"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">College Email (.edu.in)</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email Address</label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                     <input
@@ -526,8 +566,8 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
-                      placeholder="student@college.edu.in"
+                      className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none text-base"
+                      placeholder="student@example.com"
                     />
                   </div>
                 </div>
@@ -538,10 +578,11 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     required
                     value={major}
                     onChange={(e) => setMajor(e.target.value)}
-                    className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                    className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none text-base"
                   >
                     <option value="">Select your major</option>
                     <option value="Computer Science">Computer Science</option>
+                    <option value="Electronics and Communication Engineering">Electronics and Communication Engineering</option>
                     <option value="Mechanical Engineering">Mechanical Engineering</option>
                     <option value="Electrical Engineering">Electrical Engineering</option>
                     <option value="Civil Engineering">Civil Engineering</option>
@@ -553,7 +594,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-200 dark:shadow-none"
+                  className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-200 dark:shadow-none min-h-[48px]"
                 >
                   {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ShieldCheck className="w-5 h-5" />}
                   Send Verification Code
@@ -566,7 +607,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                       setAuthMode('login');
                       setError(null);
                     }}
-                    className="text-sm text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                    className="text-sm text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors min-h-[44px] w-full"
                   >
                     Already have an account? Log in
                   </button>
@@ -576,21 +617,21 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
             {signupStep === 'verify' && (
               <form onSubmit={handleVerifyOtp} className="space-y-4">
-                <div className="text-center mb-4">
+                <div className="text-center mb-4 px-2">
                   <p className="text-sm text-slate-600 dark:text-slate-400">
                     We sent a verification code to <br />
-                    <span className="font-semibold text-slate-900 dark:text-white">{email}</span>
+                    <span className="font-semibold text-slate-900 dark:text-white break-all">{email}</span>
                   </p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Verification Code</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 text-center">Verification Code</label>
                   <input
                     type="text"
                     required
                     value={otp}
                     onChange={(e) => setOtp(e.target.value)}
-                    className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-center text-2xl tracking-widest focus:ring-2 focus:ring-blue-500 outline-none"
+                    className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-center text-2xl tracking-widest focus:ring-2 focus:ring-blue-500 outline-none"
                     placeholder="000000"
                   />
                 </div>
@@ -598,7 +639,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-200 dark:shadow-none"
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-200 dark:shadow-none min-h-[48px]"
                 >
                   {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowRight className="w-5 h-5" />}
                   Verify Code
@@ -607,7 +648,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 <button
                   type="button"
                   onClick={() => setSignupStep('info')}
-                  className="w-full text-slate-500 text-sm hover:underline"
+                  className="w-full text-slate-500 text-sm hover:underline min-h-[44px]"
                 >
                   Back to info
                 </button>
@@ -616,7 +657,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
             {signupStep === 'password' && (
               <form onSubmit={handleSetPassword} className="space-y-4">
-                <div className="text-center mb-4">
+                <div className="text-center mb-4 px-2">
                   <p className="text-sm text-slate-600 dark:text-slate-400">
                     Email verified! Now set a password for your account.
                   </p>
@@ -631,7 +672,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                       required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                      className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none text-base"
                       placeholder="••••••••"
                       minLength={6}
                     />
@@ -641,7 +682,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-200 dark:shadow-none"
+                  className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-200 dark:shadow-none min-h-[48px]"
                 >
                   {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ShieldCheck className="w-5 h-5" />}
                   Complete Registration

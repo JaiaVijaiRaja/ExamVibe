@@ -11,7 +11,8 @@ import {
   Brain,
   Cloud,
   Calculator as CalcIcon,
-  Award
+  Award,
+  Info
 } from 'lucide-react';
 import { ViewType, AppProgress } from '../types';
 import { DailyStreakWidget } from './DailyStreakWidget';
@@ -35,55 +36,83 @@ const navItems = [
   { id: 'calculator', label: 'Grade Calculator', icon: CalcIcon },
   { id: 'flashcards', label: 'Revision Cards', icon: Brain },
   { id: 'reportcard', label: 'Report Card', icon: Award },
+  { id: 'about', label: 'About', icon: Info },
 ] as const;
 
 export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, progress, onUpdateProgress, userEmail }) => {
   return (
-    <div className="h-full flex flex-col py-4">
-      <div className="px-6 mb-4 hidden md:block shrink-0">
-        <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-          Main Navigation
-        </h2>
+    <div className="h-full flex flex-col py-6">
+      <div className="px-6 mb-8 shrink-0">
+        <h1 className="text-2xl font-black bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent tracking-tighter">
+          EXAMVIBE
+        </h1>
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">
+          Study Smarter
+        </p>
       </div>
       
-      <nav className="flex-1 space-y-1 px-3 overflow-y-auto custom-scrollbar">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = currentView === item.id;
-          
-          return (
-            <button
-              key={item.id}
-              onClick={() => onViewChange(item.id as ViewType)}
-              className={`
-                w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors
-                ${isActive 
-                  ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' 
-                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white'}
-              `}
-            >
-              <Icon className="w-5 h-5" />
-              {item.label}
-            </button>
-          );
-        })}
-
-        <div className="pt-4 mt-4 border-t border-slate-200 dark:border-slate-800">
-          <h2 className="px-3 mb-2 text-[10px] font-semibold text-slate-400 uppercase tracking-widest">
-            Performance
+      <nav className="flex-1 space-y-2 px-4 overflow-y-auto custom-scrollbar">
+        <div className="mb-4 px-2 flex items-center justify-between">
+          <h2 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest opacity-70">
+            Main Menu
           </h2>
-          <DailyStreakWidget onUpdateProgress={onUpdateProgress} currentGlobalStreak={progress.streaks} userEmail={userEmail} />
+          <div className="flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[8px] font-bold text-emerald-500 uppercase tracking-widest">Live</span>
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = currentView === item.id;
+            
+            return (
+              <button
+                key={item.id}
+                onClick={() => onViewChange(item.id as ViewType)}
+                className={`
+                  w-full flex items-center gap-4 px-4 py-3.5 text-sm font-bold rounded-2xl transition-all duration-300 min-h-[52px] group relative
+                  ${isActive 
+                    ? 'bg-blue-600 text-white shadow-xl shadow-blue-500/30 scale-[1.02]' 
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white'}
+                `}
+              >
+                <Icon className={`w-5 h-5 shrink-0 transition-transform duration-300 ${isActive ? 'scale-110' : 'group-hover:scale-110 text-slate-400 group-hover:text-blue-600'}`} />
+                <span className="truncate tracking-tight">{item.label}</span>
+                {isActive && (
+                  <div className="absolute left-0 w-1.5 h-8 bg-white rounded-r-full -translate-x-1" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="pt-8 mt-8 border-t border-slate-100 dark:border-slate-800">
+          <div className="flex items-center justify-between px-2 mb-4">
+            <h2 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest opacity-70">
+              Performance
+            </h2>
+            <span className="text-[9px] font-black text-blue-500 uppercase tracking-tighter">System v2.0</span>
+          </div>
+          <div className="px-1">
+            <DailyStreakWidget 
+              onUpdateProgress={onUpdateProgress} 
+              currentGlobalStreak={progress.streaks} 
+              bestStreak={progress.bestStreak}
+              userEmail={userEmail} 
+            />
+          </div>
         </div>
       </nav>
 
-      <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-700 space-y-3 shrink-0">
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-lg border border-emerald-100 dark:border-emerald-800/50">
-          <Cloud className="w-3.5 h-3.5" />
-          <span className="text-[10px] font-bold uppercase tracking-wider">Supabase Sync Active</span>
+      <div className="px-6 pt-6 mt-4 border-t border-slate-100 dark:border-slate-800 shrink-0">
+        <div className="flex items-center justify-center gap-2 opacity-50 grayscale hover:grayscale-0 transition-all duration-300">
+          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+          <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">
+            System Online
+          </p>
         </div>
-        <p className="text-xs text-slate-400 text-center">
-          &copy; 2024 StudySync AI
-        </p>
       </div>
     </div>
   );

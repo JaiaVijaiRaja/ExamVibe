@@ -18,22 +18,43 @@ export const exportToPDF = async (elementId: string, filename: string) => {
   const element = document.getElementById(elementId);
   if (!element) return;
 
-  const canvas = await html2canvas(element, {
-    scale: 2,
-    useCORS: true,
-    logging: false,
-    backgroundColor: window.getComputedStyle(document.body).backgroundColor === 'rgb(15, 23, 42)' ? '#0f172a' : '#ffffff'
+  // Dynamically import html2pdf to avoid SSR issues if any
+  const html2pdf = (await import('html2pdf.js')).default;
+
+  const opt = {
+    margin:       10,
+    filename:     `${filename}.pdf`,
+    image:        { type: 'jpeg' as const, quality: 0.98 },
+    html2canvas:  { scale: 2, useCORS: true },
+    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' as const }
+  };
+
+  // Expand all collapsible sections before exporting
+  const buttons = element.querySelectorAll('button');
+  const originalStates: boolean[] = [];
+  
+  buttons.forEach((btn, index) => {
+    // Check if it's a collapsible section button (has ChevronDown/Right)
+    if (btn.querySelector('svg.lucide-chevron-down') || btn.querySelector('svg.lucide-chevron-right')) {
+      const isClosed = !!btn.querySelector('svg.lucide-chevron-right');
+      originalStates[index] = isClosed;
+      if (isClosed) {
+        btn.click(); // Open it
+      }
+    }
   });
 
-  const imgData = canvas.toDataURL('image/png');
-  const pdf = new jsPDF({
-    orientation: 'portrait',
-    unit: 'px',
-    format: [canvas.width, canvas.height]
-  });
+  // Wait for React to render the expanded sections
+  await new Promise(resolve => setTimeout(resolve, 300));
 
-  pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-  pdf.save(`${filename}.pdf`);
+  await html2pdf().set(opt).from(element).save();
+
+  // Restore original states
+  buttons.forEach((btn, index) => {
+    if (originalStates[index]) {
+      btn.click(); // Close it back
+    }
+  });
 };
 
 export const generateNotesMarkdown = (topic: string, notes: string) => {

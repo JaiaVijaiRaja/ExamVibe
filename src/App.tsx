@@ -12,14 +12,33 @@ import { Challenge } from '@/views/Challenge';
 import { Flashcards } from '@/views/Flashcards';
 import { Calculator } from '@/views/Calculator';
 import { ReportCardView } from '@/views/ReportCardView';
+import { About } from '@/views/About';
 import { ViewType, Exam, User, AppProgress } from '@/types';
 import { supabase } from '@/lib/supabase';
+import { motion, AnimatePresence } from 'motion/react';
+import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
+
+interface Toast {
+  id: string;
+  message: string;
+  type: 'success' | 'error' | 'info';
+}
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [currentView, setCurrentView] = useState<ViewType>('dashboard');
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [exams, setExams] = useState<Exam[]>([]);
+  const [toasts, setToasts] = useState<Toast[]>([]);
+
+  const showToast = useCallback((message: string, type: 'success' | 'error' | 'info' = 'info') => {
+    const id = Math.random().toString(36).substring(7);
+    setToasts(prev => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, 4000);
+  }, []);
+
   const INITIAL_PROGRESS: AppProgress = {
     completedTasks: {},
     completedRoadmapWeeks: {},
@@ -32,10 +51,12 @@ const App: React.FC = () => {
     cgpa: 0,
     sgpa: 0,
     streaks: 0,
+    bestStreak: 0,
     questionsStudied: 0
   };
 
   const [progress, setProgress] = useState<AppProgress>(INITIAL_PROGRESS);
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
 
   // Helper to get user-specific storage keys
   const getScopedKey = useCallback((baseKey: string, email?: string) => {
@@ -117,7 +138,7 @@ const App: React.FC = () => {
         .from('user_data')
         .select('*')
         .eq('email', emailLower)
-        .single();
+        .maybeSingle();
 
       if (data && !error) {
         let remoteExams = [];
@@ -130,21 +151,23 @@ const App: React.FC = () => {
           remoteProgress = typeof data.progress === 'string' ? JSON.parse(data.progress) : data.progress;
         }
 
-        // Merge strategy: Local data takes precedence over remote data for recent changes
+        // Merge strategy: 
+        // 1. If local data is empty/default, use remote data.
+        // 2. If both exist, merge them (remote takes precedence for base fields, but we merge collections).
+        
         const mergedExams = [...remoteExams];
-        localExams.forEach((le: Exam) => {
-          const existingIndex = mergedExams.findIndex(re => re.id === le.id);
-          if (existingIndex >= 0) {
-            mergedExams[existingIndex] = le;
-          } else {
-            mergedExams.push(le);
-          }
-        });
+        if (savedExams) {
+          localExams.forEach((le: Exam) => {
+            if (!mergedExams.find(re => re.id === le.id)) {
+              mergedExams.push(le);
+            }
+          });
+        }
 
         const mergedProgress: AppProgress = {
           ...INITIAL_PROGRESS,
           ...remoteProgress,
-          ...localProgress,
+          ...(savedProgress ? JSON.parse(savedProgress) : {}),
           completedTasks: { ...remoteProgress.completedTasks, ...localProgress.completedTasks },
           completedRoadmapWeeks: { ...remoteProgress.completedRoadmapWeeks, ...localProgress.completedRoadmapWeeks },
           completedChallengeDays: { ...remoteProgress.completedChallengeDays, ...localProgress.completedChallengeDays },
@@ -155,6 +178,7 @@ const App: React.FC = () => {
           completedExams: { ...remoteProgress.completedExams, ...localProgress.completedExams },
           questionsStudied: Math.max(localProgress.questionsStudied || 0, remoteProgress.questionsStudied || 0),
           streaks: Math.max(localProgress.streaks || 0, remoteProgress.streaks || 0),
+          bestStreak: Math.max(localProgress.bestStreak || 0, remoteProgress.bestStreak || 0),
           cgpa: localProgress.cgpa || remoteProgress.cgpa || 0,
           sgpa: localProgress.sgpa || remoteProgress.sgpa || 0,
         };
@@ -171,12 +195,15 @@ const App: React.FC = () => {
       }
     } catch (err) {
       console.warn('Supabase sync failed:', err);
+    } finally {
+      setIsDataLoaded(true);
     }
   };
 
   const handleLogin = async (newUser: User) => {
     setUser(newUser);
     localStorage.setItem('study_sync_user', JSON.stringify(newUser));
+    showToast(`Welcome back, ${newUser.name}!`, 'success');
     
     // 1. Log the login event in Supabase
     try {
@@ -203,6 +230,7 @@ const App: React.FC = () => {
     setExams([]);
     setProgress(INITIAL_PROGRESS);
     setCurrentView('dashboard');
+    showToast('Logged out successfully.', 'info');
   };
 
   const toggleTheme = () => {
@@ -248,12 +276,14 @@ const App: React.FC = () => {
         localStorage.setItem(key, JSON.stringify(updated));
       }
       
-      if (user?.email) {
+      // CRITICAL: Only sync to Supabase if data has been loaded/merged
+      // This prevents overwriting remote data with local defaults on a fresh login
+      if (user?.email && isDataLoaded) {
         syncWithSupabase(user.email, { progress: updated });
       }
       return updated;
     });
-  }, [getScopedKey, syncWithSupabase, user?.email]);
+  }, [getScopedKey, syncWithSupabase, user?.email, isDataLoaded]);
 
   const handleMarkExamPassed = (id: string) => {
     updateProgress(prev => {
@@ -285,28 +315,44 @@ const App: React.FC = () => {
             onUpdateProgress={updateProgress}
             onViewChange={setCurrentView}
             onLogout={handleLogout}
+            showToast={showToast}
           />
         );
       case 'planner':
-        return <StudyPlanner progress={progress} onUpdateProgress={updateProgress} />;
+        return <StudyPlanner progress={progress} onUpdateProgress={updateProgress} showToast={showToast} />;
       case 'notes':
-        return <SmartNotes progress={progress} onUpdateProgress={updateProgress} />;
+        return <SmartNotes progress={progress} onUpdateProgress={updateProgress} showToast={showToast} />;
       case 'assignment':
-        return <AssignmentHelper progress={progress} onUpdateProgress={updateProgress} />;
+        return <AssignmentHelper progress={progress} onUpdateProgress={updateProgress} showToast={showToast} />;
       case 'roadmap':
-        return <SkillRoadmap progress={progress} onUpdateProgress={updateProgress} />;
+        return <SkillRoadmap progress={progress} onUpdateProgress={updateProgress} showToast={showToast} />;
       case 'predictor':
-        return <Predictor progress={progress} onUpdateProgress={updateProgress} />;
+        return <Predictor progress={progress} onUpdateProgress={updateProgress} showToast={showToast} />;
       case 'challenge':
-        return <Challenge progress={progress} onUpdateProgress={updateProgress} />;
+        return <Challenge progress={progress} onUpdateProgress={updateProgress} showToast={showToast} />;
       case 'flashcards':
-        return <Flashcards progress={progress} onUpdateProgress={updateProgress} />;
+        return <Flashcards progress={progress} onUpdateProgress={updateProgress} showToast={showToast} />;
       case 'calculator':
         return <Calculator />;
       case 'reportcard':
-        return <ReportCardView progress={progress} onUpdateProgress={updateProgress} />;
+        return <ReportCardView progress={progress} onUpdateProgress={updateProgress} showToast={showToast} />;
+      case 'about':
+        return <About />;
       default:
-        return <Dashboard user={user} exams={exams} progress={progress} onAddExam={handleAddExam} onDeleteExam={handleDeleteExam} onViewChange={setCurrentView} onLogout={handleLogout} />;
+        return (
+          <Dashboard 
+            user={user} 
+            exams={exams} 
+            progress={progress}
+            onAddExam={handleAddExam} 
+            onDeleteExam={handleDeleteExam} 
+            onMarkExamPassed={handleMarkExamPassed}
+            onUpdateProgress={updateProgress}
+            onViewChange={setCurrentView}
+            onLogout={handleLogout}
+            showToast={showToast}
+          />
+        );
     }
   };
 
@@ -324,6 +370,40 @@ const App: React.FC = () => {
         >
           {renderView()}
         </Layout>
+
+        {/* Global Toast Notifications */}
+        <div className="fixed bottom-4 sm:bottom-6 left-4 right-4 sm:left-auto sm:right-6 z-[100] flex flex-col gap-2 sm:gap-3 pointer-events-none">
+          <AnimatePresence mode="popLayout">
+            {toasts.map(toast => (
+              <motion.div
+                key={toast.id}
+                layout
+                initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
+                className={`
+                  pointer-events-auto flex items-center gap-3 px-4 sm:px-5 py-3 sm:py-4 rounded-xl sm:rounded-2xl shadow-2xl border backdrop-blur-xl w-full sm:min-w-[320px]
+                  ${toast.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400' : ''}
+                  ${toast.type === 'error' ? 'bg-red-500/10 border-red-500/20 text-red-600 dark:text-red-400' : ''}
+                  ${toast.type === 'info' ? 'bg-blue-500/10 border-blue-500/20 text-blue-600 dark:text-blue-400' : ''}
+                `}
+              >
+                {toast.type === 'success' && <CheckCircle2 className="w-5 h-5 shrink-0" />}
+                {toast.type === 'error' && <AlertCircle className="w-5 h-5 shrink-0" />}
+                {toast.type === 'info' && <Info className="w-5 h-5 shrink-0" />}
+                
+                <p className="text-xs sm:text-sm font-bold tracking-tight flex-1">{toast.message}</p>
+                
+                <button 
+                  onClick={() => setToasts(prev => prev.filter(t => t.id !== toast.id))}
+                  className="p-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors min-h-[32px] min-w-[32px] flex items-center justify-center"
+                >
+                  <X className="w-4 h-4 opacity-50" />
+                </button>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
       </div>
     </div>
   );

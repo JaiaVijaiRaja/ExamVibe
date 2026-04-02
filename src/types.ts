@@ -50,6 +50,7 @@ export interface AppProgress {
   cgpa?: number;
   sgpa?: number;
   streaks?: number;
+  bestStreak?: number;
   questionsStudied?: number;
   savedRoadmap?: {
     skill: string;
@@ -73,4 +74,4 @@ export interface Flashcard {
   answer: string;
 }
 
-export type ViewType = 'dashboard' | 'planner' | 'notes' | 'assignment' | 'roadmap' | 'predictor' | 'challenge' | 'profile' | 'flashcards' | 'calculator' | 'reportcard';
+export type ViewType = 'dashboard' | 'planner' | 'notes' | 'assignment' | 'roadmap' | 'predictor' | 'challenge' | 'profile' | 'flashcards' | 'calculator' | 'reportcard' | 'about';

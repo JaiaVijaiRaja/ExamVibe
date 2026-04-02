@@ -1,7 +1,7 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
 
 export const geminiService = {
   async generateStudyPlan(subjects: string[], examDate: string) {
@@ -27,7 +27,19 @@ export const geminiService = {
   },
 
   async generateNotes(topic: string, type: 'short' | 'detailed' | 'exam-ready') {
-    const prompt = `Generate ${type} study notes for the engineering topic: "${topic}". Include key definitions, formulas, and a brief summary. Use Markdown formatting.`;
+    const prompt = `You are an expert engineering tutor. Generate structured, exam-ready study notes for the engineering topic: "${topic}". 
+Always use markdown formatting with clear headings and bullet points. Avoid walls of text, and keep explanations concise and exam-focused.
+
+Ensure the notes strictly follow this structure:
+# ${topic}
+## 1. Introduction
+## 2. Key Concepts
+## 3. Working Principle
+## 4. Important Formulas (if applicable)
+## 5. Real World Applications
+## 6. Quick Revision Points
+
+Generate the ${type} version of these notes.`;
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: prompt,
